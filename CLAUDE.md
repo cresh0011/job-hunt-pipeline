@@ -113,11 +113,29 @@ scripts/run_daily.py        串起全流程，供定时任务调用
 ## 隐私
 
 项目会生成含真实姓名、手机、邮箱、学号、完整简历的文件。`.gitignore` 已排除，
-但**任何涉及提交的操作前，都要先扫一遍**：
+但**任何涉及提交的操作前，都要先扫一遍**。
+
+把真实标识填进 `IDENT` 再跑：
 
 ```python
-# 把真实姓名/手机/邮箱/学校填进去，扫全项目
+import pathlib, subprocess
+
+IDENT = {                      # 换成实际值
+    '姓名': 'xxx', '手机': '1xxxxxxxxxx', '邮箱': 'x@x.com',
+    '学号': 'xxxxxxxxx', '学校': 'xxx大学', '本机路径': r'C:\Users\<用户名>',
+}
+
+files = subprocess.run(['git', 'diff', '--cached', '--name-only'],
+                       capture_output=True, text=True).stdout.split()
+for f in files:
+    raw = open(f, 'rb').read()          # 用二进制读，图片也能扫
+    hit = [k for k, v in IDENT.items() if v.encode() in raw]
+    if hit:
+        print(f'[!!] {f}: {", ".join(hit)}')
 ```
+
+**提交前扫、推送后再从远端拉一遍复核** —— 本地干净不代表线上干净
+（比如忘了 `git add` 某个文件、或者 `.gitignore` 写漏了一条）。
 
 `data/resume/facts.yaml`、`resume/output/`、`apply/autofill.js`、`data/jobs.db`
 是最高风险的四个路径。
