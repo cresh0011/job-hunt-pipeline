@@ -374,7 +374,7 @@ footer { margin-top: 26px; color: var(--ink-3); font-size: 12px; line-height: 1.
   <footer>
     数据来自公开的校招信息聚合源（校招雷达 / xixicc2027）与国聘网、国家大学生就业服务平台，仅供线索参考；
     投递前请以公司官网为准。截止日期为源数据标注，可能变动。<br>
-    状态更新：在 Claude Code 里说一句「XX 公司进二面了」即可写入数据库。
+    状态更新：运行 <code>python scripts/track.py 公司名 状态</code> 即可写入数据库。
   </footer>
 </div>
 

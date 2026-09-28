@@ -217,10 +217,11 @@ python scripts/daily_list.py --soe-pay
 
 这部分可能比上面更有参考价值 —— 它们说明为什么最后长成现在这样。
 
-**为什么不用现成的 MCP Server？**
+**为什么不做成 MCP Server？**
 我调研了一圈，市面上的求职类 MCP 全部面向 LinkedIn、俄罗斯 hh.ru、美国 Handshake，
-对中国招聘市场没用。而我的岗位数据本来就是批量抓下来落库的，
-Claude Code 直接跑脚本读 SQLite 就行，走 MCP 反而更绕、更费 token。
+对中国招聘市场没用。而且 MCP 的价值在于给 AI 提供**实时**工具访问 ——
+我的岗位数据本来就是批量抓下来落库的，缺的是数据不是接口。
+直接跑脚本读 SQLite 更简单、更稳，也省 token。
 
 **为什么 PDF 用 Edge 而不是 Playwright？**
 Windows 自带 Edge 就是 Chromium 内核，`--print-to-pdf` 的渲染质量和 Playwright 一样，
@@ -240,7 +241,7 @@ Windows 自带 Edge 就是 Chromium 内核，`--print-to-pdf` 的渲染质量和
 
 ```
 ├── config.yaml              匹配权重、数据源、城市/学历/专业偏好（改这里，不用改代码）
-├── CLAUDE.md                给我自己用的架构笔记，也留给 AI 助手看
+├── CLAUDE.md                架构设计与踩坑记录（为什么这么写、哪些坑踩过）
 ├── run_daily.bat            一键跑全流程（Windows）
 ├── data/
 │   ├── jobs.db              SQLite 主库（唯一真相源）
