@@ -1,0 +1,83 @@
+# ============================================================
+#  简历方向变体
+#
+#  150 家投递规模下，"逐岗位完全定制简历"是负收益 —— 投入巨大，而 HR 初筛
+#  只看前 5 秒的关键词匹配。这里采用三层结构：
+#    主简历（facts.yaml 是唯一事实源） → 方向变体（本文件） → 按 JD 微调
+#
+#  变体只控制【呈现】：章节顺序、技能排序、项目排序、要点取舍。
+#  **不引入任何新事实** —— 所有内容都从 facts.yaml 取。
+# ============================================================
+
+variants:
+
+  # ----------------------------------------------------------
+  llm-rag:
+    label: 大模型应用开发
+    headline: 大模型应用开发 / RAG 工程 / Agent 开发
+    sections: [education, skills, experience, projects, honors, campus]
+    skill_order: [models, application, languages, ml, backend]
+    project_order: [中文法律 RAG 检索链路复现, 中文商品标题分类系统]
+    # 项目详略：full = 全部要点，compact = 只留前 N 条
+    project_detail:
+      中文法律 RAG 检索链路复现: full
+      中文商品标题分类系统: compact
+    compact_n: 2
+    # 实习经历保留全部要点
+    experience_detail:
+      上海左禧智能科技有限公司: full
+      上海万历报关有限公司: compact
+
+  # ----------------------------------------------------------
+  python-backend:
+    label: Python 后端开发
+    headline: Python 后端开发 / AI 应用工程
+    sections: [education, skills, experience, projects, honors, campus]
+    # 后端岗把工程能力提到前面
+    skill_order: [languages, backend, ml, models, application]
+    project_order: [中文法律 RAG 检索链路复现, 中文商品标题分类系统]
+    # 商品标题分类取 3 条（不是 full）—— 第 4 条一挤就走第二页，
+    # 而每页只落两行比少一条要点难看得多
+    project_detail:
+      中文法律 RAG 检索链路复现: full
+      中文商品标题分类系统: compact
+    compact_n: 3
+    experience_detail:
+      上海左禧智能科技有限公司: full
+      上海万历报关有限公司: full
+
+  # ----------------------------------------------------------
+  ai-algo:
+    label: AI 算法 / 大模型工程
+    headline: 大模型算法工程 / 模型微调与推理部署
+    sections: [education, skills, experience, projects, honors, campus]
+    # 算法岗把模型能力前置
+    skill_order: [models, ml, application, languages, backend]
+    project_order: [中文法律 RAG 检索链路复现, 中文商品标题分类系统]
+    project_detail:
+      中文法律 RAG 检索链路复现: full
+      中文商品标题分类系统: compact
+    compact_n: 3
+    experience_detail:
+      上海左禧智能科技有限公司: full
+      上海万历报关有限公司: full
+
+  # ----------------------------------------------------------
+  #  国央企：更看重学历、荣誉、稳定性与团队经历，
+  #  技术细节适度收敛，把荣誉和校园经历提前。
+  soe:
+    label: 国央企技术岗
+    headline: 信息技术岗 / 数字化技术岗
+    sections: [education, honors, experience, projects, skills, evaluation, campus]
+    # 原本想给国央企保留 2 条校园经历，但加上「自我评价」后会溢出 1 行。
+    # 自评里已有「善于团队沟通协作」，与第 2 条校园经历重复，故留 1 条。
+    campus_n: 1
+    skill_order: [languages, backend, models, ml, application]
+    project_order: [中文法律 RAG 检索链路复现, 中文商品标题分类系统]
+    project_detail:
+      中文法律 RAG 检索链路复现: full
+      中文商品标题分类系统: compact
+    compact_n: 2
+    experience_detail:
+      上海左禧智能科技有限公司: full
+      上海万历报关有限公司: compact

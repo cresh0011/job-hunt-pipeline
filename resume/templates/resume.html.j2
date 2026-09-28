@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>{{ r.basic.name }} - {{ r.headline }}</title>
+<style>
+  /* A4 打印：窄边距 + 密排版，目标是把校招简历压进 1 页 */
+  @page { size: A4; margin: 10mm 12mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Microsoft YaHei", "微软雅黑", "PingFang SC",
+                 "Source Han Sans SC", system-ui, sans-serif;
+    font-size: 9.6pt; line-height: 1.38; color: #1a1a1a;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+
+  /* ---------- 头部 ---------- */
+  .name { font-size: 18pt; font-weight: 700; letter-spacing: 0.06em; line-height: 1.1; }
+  .contact { margin-top: 3px; font-size: 9.2pt; color: #444; }
+  .contact .sep { color: #bbb; margin: 0 5px; }
+  .contact a { color: #1a4d8f; text-decoration: none; }
+  .intent {
+    margin-top: 6px; padding: 4px 9px;
+    background: #f2f4f7; border-left: 2.5px solid #1a4d8f;
+    font-size: 9.6pt;
+  }
+  .intent b { color: #1a4d8f; font-weight: 600; }
+
+  /* ---------- 章节 ---------- */
+  section { margin-top: 7px; }
+  h2 {
+    font-size: 10.4pt; font-weight: 700; color: #1a4d8f;
+    padding-bottom: 2px; margin-bottom: 4.5px;
+    border-bottom: 1.2px solid #c8d2e0;
+    letter-spacing: 0.04em;
+  }
+
+  /* ---------- 条目 ---------- */
+  .item { margin-bottom: 6px; }
+  .item:last-child { margin-bottom: 0; }
+  .row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .title { font-weight: 700; font-size: 9.9pt; }
+  .title .org { font-weight: 400; color: #333; }
+  .date { font-size: 9pt; color: #666; white-space: nowrap; flex: none; }
+  .meta { font-size: 9.1pt; color: #555; margin-top: 0.5px; }
+
+  ul { list-style: none; margin-top: 2px; }
+  li { position: relative; padding-left: 11px; margin-top: 1.8px; }
+  li::before {
+    content: ""; position: absolute; left: 2px; top: 0.62em;
+    width: 3.2px; height: 3.2px; border-radius: 50%; background: #1a4d8f;
+  }
+  /* 数字用等宽字形对齐，可扫读 */
+  li .n { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+  /* ---------- 技能 ---------- */
+  .skill { margin-bottom: 2.5px; }
+  .skill .k { font-weight: 700; display: inline-block; min-width: 62px; }
+
+  /* ---------- 荣誉 ---------- */
+  .honor { margin-bottom: 1.8px; padding-left: 11px; position: relative; }
+  .honor::before {
+    content: ""; position: absolute; left: 2px; top: 0.62em;
+    width: 3.2px; height: 3.2px; border-radius: 50%; background: #1a4d8f;
+  }
+  .honor .date { color: #666; font-size: 9pt; margin-right: 7px; }
+
+  /* ---------- 自我评价 ---------- */
+  .eval { text-align: justify; }
+
+  .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+  .tag { font-size: 9.3pt; color: #555; }
+</style>
+</head>
+<body>
+
+<header class="avoid-break">
+  <div class="name">{{ r.basic.name }}</div>
+  <div class="contact">
+    {{ r.basic.phone }}<span class="sep">|</span>{{ r.basic.email }}<span class="sep">|</span>{{ r.basic.location }}<span class="sep">|</span>本科应届生（{{ r.grad }}
+    {%- if r.basic.github_url %}<span class="sep">|</span><a href="{{ r.basic.github_url }}">{{ r.basic.github_url }}</a>{% endif %}
+  </div>
+  <div class="intent"><b>求职意向</b>　{{ r.headline }}</div>
+</header>
+
+{% for s in r.section_order %}
+
+{# ================= 教育经历 ================= #}
+{% if s == 'education' %}
+<section class="avoid-break">
+  <h2>教育经历</h2>
+  {% for e in r.education %}
+  <div class="item">
+    <div class="row">
+      <div class="title">{{ e.school }}<span class="org">　{{ e.major }}　{{ e.degree }}</span></div>
+      <div class="date">{{ e.start }} - {{ e.end }}</div>
+    </div>
+    {% if e.ranking %}<div class="meta">{{ e.ranking }}</div>{% endif %}
+    {% if e.courses %}<div class="meta">主修课程：{{ e.courses | join('、') }}</div>{% endif %}
+  </div>
+  {% endfor %}
+</section>
+{% endif %}
+
+{# ================= 专业技能 ================= #}
+{% if s == 'skills' %}
+<section class="avoid-break">
+  <h2>专业技能</h2>
+  {% for sk in r.skills %}
+  <div class="skill"><span class="k">{{ sk.label }}：</span>{{ sk.text }}</div>
+  {% endfor %}
+</section>
+{% endif %}
+
+{# ================= 实践经历 ================= #}
+{# 标题用「实践经历」而不是「实习经历」—— 这一栏里既有实习也有短期业务培训，
+   统一叫实习会让面试官问「这段实习的 mentor 是谁」时答不上来。 #}
+{% if s == 'experience' %}
+<section>
+  <h2>实践经历</h2>
+  {% for x in r.experiences %}
+  <div class="item avoid-break">
+    <div class="row">
+      <div class="title">{{ x.org }}<span class="org">　{{ x.role }}</span></div>
+      <div class="date">{{ x.start }} - {{ x.end }}</div>
+    </div>
+    <ul>
+      {% for b in x.bullets %}<li>{{ b }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+</section>
+{% endif %}
+
+{# ================= 项目经历 ================= #}
+{% if s == 'projects' %}
+<section>
+  <h2>项目经历</h2>
+  {% for p in r.projects %}
+  <div class="item">
+    <div class="row">
+      <div class="title">{{ p.name }}<span class="org">　{{ p.role }}{% if p.org %}　{{ p.org }}{% endif %}</span></div>
+      <div class="date">{{ p.year }}</div>
+    </div>
+    {% if p.stack %}<div class="meta">技术栈：{{ p.stack | join(' · ') }}</div>{% endif %}
+    <ul>
+      {# summary 与 facts 合并渲染；summary 作为首条 #}
+      {% if p.summary %}<li>{{ p.summary }}</li>{% endif %}
+      {% for b in p.bullets %}<li>{{ b }}</li>{% endfor %}
+    </ul>
+    {% if p.repo %}<div class="meta">仓库：<a href="{{ p.repo }}" style="color:#1a4d8f">{{ p.repo }}</a></div>{% endif %}
+  </div>
+  {% endfor %}
+</section>
+{% endif %}
+
+{# ================= 荣誉奖项 ================= #}
+{% if s == 'honors' %}
+<section class="avoid-break">
+  <h2>荣誉奖项</h2>
+  {% for h in r.honors %}
+  <div class="honor"><span class="date">{{ h.date }}</span>{{ h.text }}</div>
+  {% endfor %}
+</section>
+{% endif %}
+
+{# ================= 自我评价 ================= #}
+{# 只给国央企变体用；技术岗简历不加，版面留给项目和数据 #}
+{% if s == 'evaluation' %}
+<section class="avoid-break">
+  <h2>自我评价</h2>
+  {# 写成一段而非并列要点：中文简历这一栏本就以段落为常，且比两条要点省两行 #}
+  <div class="eval">{{ r.evaluation | join('；') }}</div>
+</section>
+{% endif %}
+
+{# ================= 校园经历 ================= #}
+{% if s == 'campus' %}
+<section class="avoid-break">
+  <h2>校园经历</h2>
+  {% for c in r.campus %}
+  <div class="item">
+    <div class="row">
+      <div class="title">{{ c.org }}<span class="org">　{{ c.role }}</span></div>
+      <div class="date">{{ c.start }} - {{ c.end }}</div>
+    </div>
+    <ul>
+      {% for b in c.bullets %}<li>{{ b }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% endfor %}
+
+</body>
+</html>
