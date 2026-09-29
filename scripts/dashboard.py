@@ -27,6 +27,12 @@ OUT_PATH = ROOT / "dashboard.html"
 
 # 投递阶段（有序）。索引即色阶档位，顺序不可乱。
 STAGES = ["待投递", "已投递", "笔试", "面试", "Offer"]
+
+# 「临近截止」只统计分数过这条线的岗位。
+# 不设这条线的话，-39 分的专利代理师和 3 分的证券客户经理都会被算成"紧急" ——
+# KPI 会虚高到失去指引作用（实测 55 条里只有个位数是对的）。
+# 与 daily_list.py 的 MIN_SCORE 保持一致。
+RELEVANT_SCORE = 25.0
 STAGE_ALIASES = {
     "待投递": "待投递",
     "已投递": "已投递",
@@ -49,6 +55,23 @@ def deadline_level(days: int | None, raw: str) -> str:
     if days <= 14:
         return "warning"
     return "normal"
+
+
+def is_internship(r, is_soe: bool) -> bool:
+    """判断是不是实习岗。
+
+    只看岗位名会漏：广州公交「信息化助理」名字里没有「实习」二字，
+    但薪资是 130-150 元/天、JD 写「全日制本科及以上学历在读」——妥妥的实习岗。
+    所以按日计薪、要求在校生，都是判据。与 daily_list.py 保持一致。
+    """
+    name = (r["job_name"] if is_soe else r["position"]) or ""
+    if "实习" in name:
+        return True
+    if not is_soe:
+        return False
+    wage = r["wage"] or ""
+    jd = r["jd"] or ""
+    return "元/天" in wage or "在读" in jd
 
 
 def build_rows(conn, table: str, cfg: dict) -> list[dict]:
@@ -77,6 +100,7 @@ def build_rows(conn, table: str, cfg: dict) -> list[dict]:
             "status": r["status"] or "待投递",
             "is_new": is_recent(r["first_seen"], cfg["dashboard"]["new_days"]),
             "source": r["source"] or "",
+            "is_intern": is_internship(r, is_soe),
         })
     return out
 
@@ -104,7 +128,17 @@ def main() -> int:
     new_count = sum(1 for r in all_rows if r["is_new"])
     pending = sum(1 for r in all_rows if r["status"] == "待投递")
     interviewing = sum(1 for r in all_rows if STAGE_ALIASES.get(r["status"]) == "面试")
-    urgent = sum(1 for r in all_rows if r["level"] in ("critical", "serious") and (r["days"] or 0) >= 0)
+    # 只统计「对口 + 非实习」的临近截止岗位。
+    # 两个条件缺一不可：不筛分数会把 -39 分的专利代理师算成紧急；
+    # 不筛实习会把实习岗算成该投的岗位（用户找的是 2027 届正职）。
+    def _urgent(r) -> bool:
+        return (r["level"] in ("critical", "serious")
+                and (r["days"] or 0) >= 0)
+
+    urgent = sum(1 for r in all_rows
+                 if _urgent(r) and r["score"] >= RELEVANT_SCORE and not r["is_intern"])
+    # 顺带记下放宽后的数量，副文字里说明，避免读者以为漏了
+    urgent_all = sum(1 for r in all_rows if _urgent(r))
     expired = sum(1 for r in all_rows if (r["days"] is not None and r["days"] < 0))
 
     data = {
@@ -117,6 +151,7 @@ def main() -> int:
             "pending": pending,
             "interviewing": interviewing,
             "urgent": urgent,
+            "urgentAll": urgent_all,
             "expired": expired,
         },
         "funnel": funnel,
@@ -390,7 +425,7 @@ const KPI = [
   ['岗位总数', s.total, `技术岗 ${s.tech} · 国央企 ${s.soe}`],
   ['今日新增', s.new,  '首次抓取到的岗位'],
   ['待投递',   s.pending, `面试中 ${s.interviewing}`],
-  ['临近截止', s.urgent,  `已截止 ${s.expired}`],
+  ['临近截止', s.urgent,  `仅统计对口岗位（共 ${s.urgentAll} 条临近，已滤掉不对口的）`],
 ];
 document.getElementById('kpis').innerHTML = KPI.map(([label, value, sub]) =>
   `<div class="kpi"><div class="label">${label}</div>
