@@ -78,6 +78,10 @@ def do_update(args) -> int:
 
     status = STATUS_ALIASES.get(args.status, args.status)
 
+    # 保留完整候选，用于提示编号
+    all_hits = list(hits)
+    not_updated: list[dict] = []
+
     # --pick N：只更新选中的那一条
     if args.pick:
         if not 1 <= args.pick <= len(hits):
@@ -85,12 +89,17 @@ def do_update(args) -> int:
             for i, h in enumerate(hits, 1):
                 print(f"  {i}. [{h['label']}] {h['company']} — {h['jn'][:40]}")
             return 1
+        not_updated = [h for h in hits if h is not hits[args.pick - 1]]
         hits = [hits[args.pick - 1]]
 
-    # 公司名完全相等时只更那几条，避免「小红书」把「小红书Ace」也带上
+    # 公司名完全相等时只更那几条，避免「小红书」把「小红书Ace」也带上。
+    # ⚠️ 但这会误伤：「Shopee」既可能指字面叫 Shopee 的条目，
+    #    也可能指「Shopee — AI Star Program」—— 实测就把投递记录打错了条目。
+    #    所以必须把被排除的候选显式列出来，让用户能发现打错并纠正。
     elif len(hits) > 1:
         exact = [h for h in hits if h["company"] == args.keyword]
         if exact:
+            not_updated = [h for h in hits if h["company"] != args.keyword]
             hits = exact
 
     updated = 0
@@ -111,10 +120,21 @@ def do_update(args) -> int:
     print(f"\n已更新 {updated} 条（{now()}）")
     if args.note:
         print(f"备注：{args.note}")
+
     if len(hits) > 1:
         print(f"提示：这家公司有 {len(hits)} 个条目，已一并更新。"
               f"只想改一条用 --pick N。")
-    print("跑 `python scripts/dashboard.py` 刷新看板。")
+
+    # 关键提示：同名公司常常有多个条目，选错就白记了。
+    # 实测踩过：投的是「Shopee — AI Star Program」，记录却打到了字面叫「Shopee」的条目。
+    if not_updated:
+        print(f"\n⚠️ 另有 {len(not_updated)} 个含「{args.keyword}」的条目**没有**更新：")
+        for h in not_updated[:8]:
+            idx = all_hits.index(h) + 1
+            print(f"     {idx}. [{h['label']}] {h['company']} — {h['jn'][:36]}")
+        print(f"   如果不是你投的那个，用 --pick <编号> 重记一次。")
+
+    print("\n跑 `python scripts/dashboard.py` 刷新看板。")
     return 0
 
 
